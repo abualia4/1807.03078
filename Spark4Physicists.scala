@@ -67,3 +67,27 @@ start = System.nanoTime()
 gal.describe( ).show()
 finish = System.nanoTime()
 elapsedTime(start,finish) 
+
+// Minimum and Maximum  spark functions
+ start = System.nanoTime()
+ val minMax= gal.select(min("z"),max("z") ).first() 
+ val zMax  =minMax(1).asInstanceOf[Float]
+ val zMin   =minMax(0).asInstanceOf[Float]
+ println("Minimum Value:"+ zMin+ "\t"+ "Maximum Value:"+ zMax)
+ finish = System.nanoTime()
+ elapsedTime(start,finish) 
+
+//Adding the zbin number column (labelled “bin”) 
+ start = System.nanoTime()
+ val Nbins=100
+ var dz=(zMax-zMin)/Nbins
+ val zBin=gal.select("Z").withColumn("bin", ((col("Z")-zMin-dz/2)/dz).cast(IntegerType)  ) 
+
+//Grouping by the bin column, counting its membersand sorting in ascending order
+var h=zBin.groupBy("bin").count.orderBy("bin")
+//add the bin locations  and drop the bin numer
+h=h.withColumn("loc", col("bin")*dz+zMin+dz/2 ).drop("bin")   
+h=h.select("loc","count")
+h.show()
+finish = System.nanoTime()
+elapsedTime(start,finish) 
